@@ -1,0 +1,19 @@
+const eslint = require('@eslint/js');
+const tseslint = require('typescript-eslint');
+const eslintPluginPrettierRecommended = require('eslint-plugin-prettier/recommended');
+
+module.exports = tseslint.config(
+  eslint.configs.recommended,
+  ...tseslint.configs.recommended,
+  eslintPluginPrettierRecommended,
+  {
+    ignores: ['node_modules/**', 'dist/**'],
+  },
+  {
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/explicit-module-boundary-types': 'off',
+      'no-console': 'warn',
+    }
+  }
+);
