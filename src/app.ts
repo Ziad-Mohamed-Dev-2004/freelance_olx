@@ -26,7 +26,22 @@ import propertyEngagementRoutes from './routes/property-engagement.route';
 const app: Express = express();
 
 // ─── Security Headers ─────────────────────────────────────────────────────────
-app.use(helmet());
+// CSP is configured to allow unpkg CDN assets required by Swagger UI docs page.
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "https://unpkg.com"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://unpkg.com"],
+        imgSrc: ["'self'", "data:", "https://unpkg.com"],
+        connectSrc: ["'self'"],
+        fontSrc: ["'self'", "https://unpkg.com"],
+        objectSrc: ["'none'"],
+      },
+    },
+  }),
+);
 
 // ─── Body Parsing ─────────────────────────────────────────────────────────────
 app.use(express.json({ limit: '10kb' }));
@@ -79,25 +94,53 @@ const authLimiter = rateLimit({
 app.use('/api/v1/auth', authLimiter);
 
 // ─── API Documentation (Swagger) ──────────────────────────────────────────────
+// Serve the raw OpenAPI JSON spec.
 app.get('/api/v1/docs.json', (_req: Request, res: Response) => {
   res.setHeader('Content-Type', 'application/json');
   res.send(swaggerSpec);
 });
 
-app.use(
-  '/api/v1/docs',
-  swaggerUi.serve,
-  swaggerUi.setup(swaggerSpec, {
-    customSiteTitle: 'OLX Clone API Docs',
-    customCss: '.swagger-ui .topbar { display: none }',
-    swaggerOptions: {
-      docExpansion: 'list',
-      tagsSorter: 'alpha',
-      operationsSorter: 'alpha',
-      persistAuthorization: true,
-    },
-  }),
-);
+// Serve Swagger UI via CDN instead of local static files.
+// swagger-ui-express's static file middleware doesn't work on Vercel serverless
+// because all requests are routed to the serverless function and Express cannot
+// serve binary assets with the correct MIME types in that environment.
+app.get('/api/v1/docs', (_req: Request, res: Response) => {
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OLX Clone API Docs</title>
+  <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css" />
+  <style>
+    body { margin: 0; }
+    .swagger-ui .topbar { display: none; }
+  </style>
+</head>
+<body>
+  <div id="swagger-ui"></div>
+  <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+  <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-standalone-preset.js"></script>
+  <script>
+    window.onload = function () {
+      SwaggerUIBundle({
+        url: '/api/v1/docs.json',
+        dom_id: '#swagger-ui',
+        presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset],
+        layout: 'StandaloneLayout',
+        docExpansion: 'list',
+        tagsSorter: 'alpha',
+        operationsSorter: 'alpha',
+        persistAuthorization: true,
+        tryItOutEnabled: true,
+      });
+    };
+  </script>
+</body>
+</html>`;
+  res.setHeader('Content-Type', 'text/html');
+  res.send(html);
+});
 
 // ─── API Routes ───────────────────────────────────────────────────────────────
 app.use('/api/v1/auth', authRoutes);
