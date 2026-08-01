@@ -114,7 +114,19 @@ app.use('/api/v1/notifications', notificationRoutes);
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1', propertyEngagementRoutes);
 
+// ─── Root Route ───────────────────────────────────────────────────────────────
+app.get('/', (_req: Request, res: Response) => {
+  res.status(200).json({
+    success: true,
+    message: 'OLX Clone API is live 🚀',
+    version: 'v1',
+    docs: '/api/v1/docs',
+    health: '/api/v1/health',
+  });
+});
+
 // ─── Health Check ─────────────────────────────────────────────────────────────
+
 /**
  * @swagger
  * /health:
