@@ -24,7 +24,16 @@ import adminRoutes from './routes/admin.route';
 import propertyEngagementRoutes from './routes/property-engagement.route';
 
 const app: Express = express();
-app.set('trust proxy', true);
+
+// Trust a bounded number of proxy hops so rate limiting cannot be bypassed
+// by arbitrary X-Forwarded-For headers. Vercel sits behind a single proxy hop.
+const parsedTrustProxyHops = Number(process.env.TRUST_PROXY_HOPS);
+const trustProxyHops = Number.isInteger(parsedTrustProxyHops)
+  ? parsedTrustProxyHops
+  : process.env.VERCEL
+    ? 1
+    : 0;
+app.set('trust proxy', trustProxyHops);
 
 function getRequestOrigin(req: Request): string {
   const forwardedProto = req.get('x-forwarded-proto')?.split(',')[0]?.trim();

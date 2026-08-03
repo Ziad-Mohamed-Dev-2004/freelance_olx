@@ -17,6 +17,7 @@ const seedAdmin = async () => {
     let admin = await User.findOne({ email: adminEmail });
 
     if (admin) {
+      admin.password = adminPassword;
       admin.role = UserRole.ADMIN;
       admin.status = UserStatus.ACTIVE;
       admin.isEmailVerified = true;

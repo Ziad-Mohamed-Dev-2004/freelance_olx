@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import * as authService from '../services/auth.service';
 import * as tokenService from '../services/token.service';
 import * as otpService from '../services/otp.service';
-import * as smsService from '../services/sms.service';
+import * as emailService from '../services/email.service';
 import { asyncHandler } from '../utils/asyncHandler';
 import { ApiResponse } from '../utils/ApiResponse';
 import { OtpType } from '../interfaces/otp.interface';
@@ -17,14 +17,11 @@ import adminLogService from '../services/admin-log.service';
 export const register = asyncHandler(async (req: Request, res: Response) => {
   const user = await authService.registerUser(req.body);
   const tokens = await tokenService.generateAuthTokens(user);
-  // Auto-generate and send phone OTP on registration
-  if (user.phone) {
-    const code = await otpService.generateOtp(
-      user._id as unknown as string,
-      OtpType.PHONE_VERIFICATION,
-    );
-    await smsService.sendSms(user.phone, `Your Olx Clone verification code is: ${code}`);
-  }
+  const code = await otpService.generateOtp(
+    user._id as unknown as string,
+    OtpType.EMAIL_VERIFICATION,
+  );
+  await emailService.sendVerificationOtpEmail(user.email, code);
   ApiResponse.success(res, 201, 'Registration successful', { user, tokens });
 });
 

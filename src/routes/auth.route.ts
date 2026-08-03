@@ -66,7 +66,7 @@ router.post('/register', validate(authValidation.registerSchema), authController
  * @swagger
  * /auth/login:
  *   post:
- *     summary: Login with email and password
+ *     summary: Login with verified email and password
  *     tags: [Auth]
  *     requestBody:
  *       required: true
@@ -257,7 +257,7 @@ router.get('/me', auth, authController.me);
  * @swagger
  * /auth/resend-otp:
  *   post:
- *     summary: Generate and send a new OTP to the user's phone
+ *     summary: Generate and send a new OTP to the user's email
  *     tags: [OTP]
  *     security:
  *       - bearerAuth: []
@@ -272,7 +272,7 @@ router.get('/me', auth, authController.me);
  *               type:
  *                 type: string
  *                 enum: [phone_verification, email_verification, password_reset]
- *                 example: phone_verification
+ *                 example: email_verification
  *     responses:
  *       200:
  *         description: OTP sent successfully
@@ -285,7 +285,7 @@ router.post('/resend-otp', auth, validate(otpValidation.resendOtpSchema), otpCon
  * @swagger
  * /auth/verify-otp:
  *   post:
- *     summary: Verify OTP code
+ *     summary: Verify email OTP code
  *     tags: [OTP]
  *     security:
  *       - bearerAuth: []
@@ -300,7 +300,7 @@ router.post('/resend-otp', auth, validate(otpValidation.resendOtpSchema), otpCon
  *               type:
  *                 type: string
  *                 enum: [phone_verification, email_verification, password_reset]
- *                 example: phone_verification
+ *                 example: email_verification
  *               code:
  *                 type: string
  *                 example: "123456"

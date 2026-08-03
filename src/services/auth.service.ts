@@ -3,7 +3,7 @@ import Token from '../models/token.model';
 import { TokenType } from '../interfaces/token.interface';
 import { verifyToken } from './token.service';
 import { ConflictError, UnauthorizedError, BadRequestError } from '../utils/AppError';
-import { UserStatus } from '../interfaces/user.interface';
+import { UserRole, UserStatus } from '../interfaces/user.interface';
 
 /**
  * Registers a new user.
@@ -36,6 +36,11 @@ export const loginUserWithEmailAndPassword = async (email: string, password: str
   ) {
     throw new UnauthorizedError('Incorrect email or password');
   }
+
+  if (user.role !== UserRole.ADMIN && !user.isEmailVerified) {
+    throw new UnauthorizedError('Please verify your email OTP before logging in');
+  }
+
   return user;
 };
 

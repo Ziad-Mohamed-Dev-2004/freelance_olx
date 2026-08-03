@@ -436,7 +436,7 @@ const options: swaggerJsdoc.Options = {
             type: {
               type: 'string',
               enum: ['phone_verification', 'email_verification', 'password_reset'],
-              example: 'phone_verification',
+              example: 'email_verification',
             },
           },
         },
@@ -447,7 +447,7 @@ const options: swaggerJsdoc.Options = {
             type: {
               type: 'string',
               enum: ['phone_verification', 'email_verification', 'password_reset'],
-              example: 'phone_verification',
+              example: 'email_verification',
             },
             code: { type: 'string', example: '123456' },
           },
