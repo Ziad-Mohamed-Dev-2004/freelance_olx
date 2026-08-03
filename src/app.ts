@@ -5,9 +5,8 @@ import compression from 'compression';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import { mongoSanitizeMiddleware } from './middlewares/sanitize.middleware';
-import swaggerUi from 'swagger-ui-express';
 import { errorHandler, notFoundHandler } from './middlewares/error.middleware';
-import { swaggerSpec } from './docs/swagger';
+import { getSwaggerSpec } from './docs/swagger';
 import logger from './utils/logger';
 import authRoutes from './routes/auth.route';
 import categoryRoutes from './routes/category.route';
@@ -24,6 +23,18 @@ import adminRoutes from './routes/admin.route';
 import propertyEngagementRoutes from './routes/property-engagement.route';
 
 const app: Express = express();
+app.set('trust proxy', true);
+
+function getRequestOrigin(req: Request): string {
+  const forwardedProto = req.get('x-forwarded-proto')?.split(',')[0]?.trim();
+  const forwardedHost = req.get('x-forwarded-host')?.split(',')[0]?.trim();
+
+  if (forwardedProto && forwardedHost) {
+    return `${forwardedProto}://${forwardedHost}`;
+  }
+
+  return `${req.protocol}://${req.get('host')}`;
+}
 
 // ─── Security Headers ─────────────────────────────────────────────────────────
 // CSP is configured to allow unpkg CDN assets required by Swagger UI docs page.
@@ -95,9 +106,9 @@ app.use('/api/v1/auth', authLimiter);
 
 // ─── API Documentation (Swagger) ──────────────────────────────────────────────
 // Serve the raw OpenAPI JSON spec.
-app.get('/api/v1/docs.json', (_req: Request, res: Response) => {
+app.get('/api/v1/docs.json', (req: Request, res: Response) => {
   res.setHeader('Content-Type', 'application/json');
-  res.send(swaggerSpec);
+  res.send(getSwaggerSpec(getRequestOrigin(req)));
 });
 
 // Serve Swagger UI via CDN instead of local static files.
@@ -105,6 +116,7 @@ app.get('/api/v1/docs.json', (_req: Request, res: Response) => {
 // because all requests are routed to the serverless function and Express cannot
 // serve binary assets with the correct MIME types in that environment.
 app.get('/api/v1/docs', (_req: Request, res: Response) => {
+  const docsJsonUrl = `${getRequestOrigin(_req)}/api/v1/docs.json`;
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -124,7 +136,7 @@ app.get('/api/v1/docs', (_req: Request, res: Response) => {
   <script>
     window.onload = function () {
       SwaggerUIBundle({
-        url: '/api/v1/docs.json',
+        url: ${JSON.stringify(docsJsonUrl)},
         dom_id: '#swagger-ui',
         presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset],
         layout: 'StandaloneLayout',

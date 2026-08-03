@@ -44,16 +44,12 @@ const options: swaggerJsdoc.Options = {
     },
     servers: [
       {
-        url: `http://localhost:3000/api/v1`,
-        description: 'Development Server (Port 3000)',
+        url: '/api/v1',
+        description: 'Current Deployment',
       },
       {
         url: `http://localhost:${config.port}/api/v1`,
-        description: 'Configured Port Server',
-      },
-      {
-        url: 'https://api.olxclone.com/v1',
-        description: 'Production Server',
+        description: 'Local Development',
       },
     ],
     components: {
@@ -548,4 +544,39 @@ const options: swaggerJsdoc.Options = {
   apis: getSwaggerApiFiles(),
 };
 
-export const swaggerSpec = swaggerJsdoc(options);
+const baseSwaggerSpec = swaggerJsdoc(options);
+
+type SwaggerServer = {
+  url: string;
+  description: string;
+};
+
+function buildSwaggerServers(origin?: string): SwaggerServer[] {
+  const trimmedOrigin = origin?.trim().replace(/\/+$/, '');
+  const candidates: SwaggerServer[] = [
+    ...(trimmedOrigin
+      ? [{ url: `${trimmedOrigin}/api/v1`, description: 'Current Deployment' }]
+      : []),
+    { url: '/api/v1', description: 'Current Deployment' },
+    { url: `http://localhost:${config.port}/api/v1`, description: 'Local Development' },
+  ];
+
+  const seen = new Set<string>();
+  return candidates.filter((server) => {
+    if (seen.has(server.url)) {
+      return false;
+    }
+
+    seen.add(server.url);
+    return true;
+  });
+}
+
+export function getSwaggerSpec(origin?: string) {
+  return {
+    ...baseSwaggerSpec,
+    servers: buildSwaggerServers(origin),
+  };
+}
+
+export const swaggerSpec = getSwaggerSpec();
