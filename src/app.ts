@@ -5,6 +5,7 @@ import compression from 'compression';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import { mongoSanitizeMiddleware } from './middlewares/sanitize.middleware';
+import { connectDB } from './config/database';
 import { errorHandler, notFoundHandler } from './middlewares/error.middleware';
 import { getSwaggerSpec } from './docs/swagger';
 import logger from './utils/logger';
@@ -103,6 +104,20 @@ const authLimiter = rateLimit({
   },
 });
 app.use('/api/v1/auth', authLimiter);
+
+// Ensure MongoDB is connected before handling API routes on serverless platforms.
+app.use('/api/v1', async (req, res, next) => {
+  if (req.path === '/docs' || req.path === '/docs.json') {
+    return next();
+  }
+
+  try {
+    await connectDB();
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
 
 // ─── API Documentation (Swagger) ──────────────────────────────────────────────
 // Serve the raw OpenAPI JSON spec.
