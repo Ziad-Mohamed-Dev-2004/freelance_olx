@@ -1,5 +1,6 @@
 import userRepository, { UserRepository } from '../repositories/user.repository';
 import adminRepository, { AdminRepository } from '../repositories/admin.repository';
+import userAccountService from './user-account.service';
 import {
   AdminUserQuery,
   ChangeUserRoleInput,
@@ -81,13 +82,8 @@ export class AdminUserService {
   }
 
   async softDelete(id: string, adminId: string) {
-    const user = await this.ensureUserExists(id);
     this.preventSelfAction(adminId, id, 'delete your own account');
-    await this.ensureNotAdmin(id);
-    if (user.isDeleted) throw new BadRequestError('User is already deleted');
-    const deleted = await this.userRepo.softDelete(id);
-    if (!deleted) throw new NotFoundError('User not found');
-    return deleted;
+    return userAccountService.softDelete(id);
   }
 
   async restore(id: string, adminId: string) {
@@ -127,7 +123,7 @@ export class AdminUserService {
   private async ensureNotAdmin(id: string) {
     const user = await this.userRepo.findById(id);
     if (user?.role === UserRole.ADMIN) {
-      throw new BadRequestError('Admin accounts cannot be blocked, suspended, or deleted');
+      throw new BadRequestError('Admin accounts cannot be blocked or suspended');
     }
   }
 

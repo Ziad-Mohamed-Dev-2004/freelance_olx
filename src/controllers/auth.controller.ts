@@ -5,7 +5,6 @@ import * as otpService from '../services/otp.service';
 import * as emailService from '../services/email.service';
 import { asyncHandler } from '../utils/asyncHandler';
 import { ApiResponse } from '../utils/ApiResponse';
-import { OtpType } from '../interfaces/otp.interface';
 import logger from '../utils/logger';
 import { UserRole } from '../interfaces/user.interface';
 import adminLogService from '../services/admin-log.service';
@@ -108,4 +107,13 @@ export const resetPassword = asyncHandler(async (req: Request, res: Response) =>
  */
 export const me = asyncHandler(async (req: Request, res: Response) => {
   ApiResponse.success(res, 200, 'User profile retrieved', { user: req.user });
+});
+
+/**
+ * DELETE /auth/me
+ * Soft deletes the authenticated user's account.
+ */
+export const deleteMyAccount = asyncHandler(async (req: Request, res: Response) => {
+  const deletedUser = await authService.deleteCurrentUserAccount(req.user!._id.toString());
+  ApiResponse.success(res, 200, 'Account deleted successfully', { user: deletedUser });
 });

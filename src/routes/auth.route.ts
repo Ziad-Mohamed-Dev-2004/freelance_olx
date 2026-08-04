@@ -322,6 +322,34 @@ router.get('/me', auth, authController.me);
 
 /**
  * @swagger
+ * /auth/me:
+ *   delete:
+ *     summary: Delete current authenticated user's account
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Account deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         user:
+ *                           $ref: '#/components/schemas/UserResponse'
+ *       401:
+ *         description: Not authenticated
+ */
+router.delete('/me', auth, authController.deleteMyAccount);
+
+/**
+ * @swagger
  * /auth/resend-otp:
  *   post:
  *     summary: Generate and send a new OTP to the user's email

@@ -230,7 +230,7 @@ router.get('/users', ...admin, validate(validation.adminUserQuerySchema), contro
  *       200:
  *         description: User updated
  *   delete:
- *     summary: Soft delete user (Admin)
+ *     summary: Soft delete any account except the current admin account
  *     tags: [Admin]
  *     security:
  *       - bearerAuth: []
@@ -342,6 +342,7 @@ router.delete(
   '/users/:id',
   ...admin,
   validate(validation.adminUserIdSchema),
+  auditAdminAction('DELETE_USER', 'User'),
   controller.deleteUser,
 );
 

@@ -2,6 +2,7 @@ import User from '../models/user.model';
 import Token from '../models/token.model';
 import { TokenType } from '../interfaces/token.interface';
 import { verifyToken } from './token.service';
+import userAccountService from './user-account.service';
 import { ConflictError, UnauthorizedError, BadRequestError } from '../utils/AppError';
 import { UserRole, UserStatus } from '../interfaces/user.interface';
 
@@ -85,4 +86,11 @@ export const resetPassword = async (resetPasswordToken: string, newPassword: str
   user.password = newPassword;
   await user.save(); // pre-save hook will hash it
   await Token.deleteMany({ user: user._id, type: TokenType.RESET_PASSWORD });
+};
+
+/**
+ * Soft deletes the current user's account and revokes active auth artifacts.
+ */
+export const deleteCurrentUserAccount = async (userId: string) => {
+  return userAccountService.softDelete(userId);
 };
