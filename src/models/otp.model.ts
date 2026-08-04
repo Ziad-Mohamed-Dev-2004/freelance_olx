@@ -7,7 +7,15 @@ const otpSchema = new Schema<IOtp>(
     user: {
       type: Schema.Types.ObjectId,
       ref: 'User',
-      required: true,
+      required: false,
+    },
+    email: {
+      type: String,
+      required: false,
+    },
+    pendingUserData: {
+      type: Schema.Types.Mixed,
+      required: false,
     },
     code: {
       type: String,

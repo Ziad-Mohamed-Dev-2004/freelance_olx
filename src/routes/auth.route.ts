@@ -36,7 +36,45 @@ const router = express.Router();
  *                 example: "+201100341767"
  *     responses:
  *       201:
- *         description: User registered successfully
+ *         description: Registration initiated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessResponse'
+ *       400:
+ *         description: Validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       409:
+ *         description: Email already exists
+ */
+router.post('/register', validate(authValidation.registerSchema), authController.register);
+
+/**
+ * @swagger
+ * /auth/verify-registration:
+ *   post:
+ *     summary: Verify email OTP code and complete registration
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email, code]
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 example: john@example.com
+ *               code:
+ *                 type: string
+ *                 example: "123456"
+ *     responses:
+ *       201:
+ *         description: Registration verified successfully
  *         content:
  *           application/json:
  *             schema:
@@ -52,15 +90,44 @@ const router = express.Router();
  *                         tokens:
  *                           $ref: '#/components/schemas/TokenPair'
  *       400:
- *         description: Validation error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- *       409:
- *         description: Email already exists
+ *         description: Invalid or expired OTP
+ *       404:
+ *         description: OTP not found or has expired
  */
-router.post('/register', validate(authValidation.registerSchema), authController.register);
+router.post(
+  '/verify-registration',
+  validate(authValidation.verifyRegistrationSchema),
+  authController.verifyRegistration,
+);
+
+/**
+ * @swagger
+ * /auth/resend-registration-otp:
+ *   post:
+ *     summary: Generate and send a new OTP to the user's email during registration
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email]
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 example: john@example.com
+ *     responses:
+ *       200:
+ *         description: OTP sent successfully
+ *       404:
+ *         description: No pending registration found for this email
+ */
+router.post(
+  '/resend-registration-otp',
+  validate(authValidation.resendRegistrationOtpSchema),
+  authController.resendRegistrationOtp,
+);
 
 /**
  * @swagger

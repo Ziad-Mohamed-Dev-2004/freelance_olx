@@ -48,3 +48,19 @@ export const resetPasswordSchema = z.object({
     token: z.string().min(1, 'Token is required'),
   }),
 });
+
+export const verifyRegistrationSchema = z.object({
+  body: z.object({
+    email: z.string().email('Invalid email format'),
+    code: z
+      .string()
+      .length(6, 'OTP must be exactly 6 digits')
+      .regex(/^\d+$/, 'OTP must contain only numbers'),
+  }),
+});
+
+export const resendRegistrationOtpSchema = z.object({
+  body: z.object({
+    email: z.string().email('Invalid email format'),
+  }),
+});

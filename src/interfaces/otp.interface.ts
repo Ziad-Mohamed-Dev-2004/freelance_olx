@@ -7,7 +7,9 @@ export enum OtpType {
 }
 
 export interface IOtp {
-  user: Types.ObjectId;
+  user?: Types.ObjectId;
+  email?: string;
+  pendingUserData?: any;
   code: string;
   type: OtpType;
   attempts: number;

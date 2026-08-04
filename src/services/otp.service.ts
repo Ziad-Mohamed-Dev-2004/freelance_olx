@@ -84,3 +84,74 @@ export const verifyOtp = async (
     await user.save();
   }
 };
+
+export const generateRegistrationOtp = async (userData: any): Promise<string> => {
+  const { email } = userData;
+
+  if (await User.findOne({ email })) {
+    throw new BadRequestError('Email address is already registered');
+  }
+
+  await Otp.deleteMany({ email, type: OtpType.EMAIL_VERIFICATION });
+
+  const code = generateRandom6DigitNumber();
+  const expiresAt = new Date(Date.now() + EXPIRATION_MINUTES * 60 * 1000);
+
+  await Otp.create({
+    email,
+    code,
+    type: OtpType.EMAIL_VERIFICATION,
+    expiresAt,
+    pendingUserData: userData,
+  });
+
+  return code;
+};
+
+export const verifyRegistrationOtp = async (email: string, code: string) => {
+  const otpDoc = await Otp.findOne({ email, type: OtpType.EMAIL_VERIFICATION });
+
+  if (!otpDoc) {
+    throw new NotFoundError('OTP not found or has expired. Please request a new one.');
+  }
+
+  if (otpDoc.attempts >= MAX_ATTEMPTS) {
+    await otpDoc.deleteOne();
+    throw new BadRequestError('Maximum OTP attempts exceeded. Please request a new code.');
+  }
+
+  const isMatch = await otpDoc.isOtpMatch(code);
+
+  if (!isMatch) {
+    otpDoc.attempts += 1;
+    await otpDoc.save();
+    const remaining = MAX_ATTEMPTS - otpDoc.attempts;
+    throw new BadRequestError(`Invalid OTP. ${remaining} attempt(s) remaining.`);
+  }
+
+  const { pendingUserData } = otpDoc;
+  
+  if (!pendingUserData) {
+    throw new BadRequestError('Pending user data not found.');
+  }
+
+  const user = await User.create({
+    ...pendingUserData,
+    isEmailVerified: true,
+  });
+
+  await otpDoc.deleteOne();
+
+  return user;
+};
+
+export const resendRegistrationOtp = async (email: string): Promise<string> => {
+  const otpDoc = await Otp.findOne({ email, type: OtpType.EMAIL_VERIFICATION });
+
+  if (!otpDoc) {
+    throw new NotFoundError('No pending registration found for this email.');
+  }
+
+  const userData = otpDoc.pendingUserData;
+  return generateRegistrationOtp(userData);
+};

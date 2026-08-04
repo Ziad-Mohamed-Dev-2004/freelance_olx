@@ -15,14 +15,31 @@ import adminLogService from '../services/admin-log.service';
  * Registers a new user and returns auth tokens.
  */
 export const register = asyncHandler(async (req: Request, res: Response) => {
-  const user = await authService.registerUser(req.body);
+  const code = await otpService.generateRegistrationOtp(req.body);
+  await emailService.sendVerificationOtpEmail(req.body.email, code);
+  ApiResponse.success(res, 201, 'Registration initiated. Please verify your email.');
+});
+
+/**
+ * POST /auth/verify-registration
+ * Verifies email OTP and completes registration.
+ */
+export const verifyRegistration = asyncHandler(async (req: Request, res: Response) => {
+  const { email, code } = req.body;
+  const user = await otpService.verifyRegistrationOtp(email, code);
   const tokens = await tokenService.generateAuthTokens(user);
-  const code = await otpService.generateOtp(
-    user._id as unknown as string,
-    OtpType.EMAIL_VERIFICATION,
-  );
-  await emailService.sendVerificationOtpEmail(user.email, code);
-  ApiResponse.success(res, 201, 'Registration successful', { user, tokens });
+  ApiResponse.success(res, 201, 'Registration verified successfully', { user, tokens });
+});
+
+/**
+ * POST /auth/resend-registration-otp
+ * Resends the registration OTP.
+ */
+export const resendRegistrationOtp = asyncHandler(async (req: Request, res: Response) => {
+  const { email } = req.body;
+  const code = await otpService.resendRegistrationOtp(email);
+  await emailService.sendVerificationOtpEmail(email, code);
+  ApiResponse.success(res, 200, 'OTP resent successfully');
 });
 
 /**
