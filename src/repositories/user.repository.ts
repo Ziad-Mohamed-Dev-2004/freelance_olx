@@ -53,6 +53,10 @@ export class UserRepository {
     return this.updateById(id, { isDeleted: true, deletedAt: new Date() });
   }
 
+  async hardDelete(id: string): Promise<IUser | null> {
+    return User.findByIdAndDelete(id).exec();
+  }
+
   async restore(id: string): Promise<IUser | null> {
     return this.updateById(id, { isDeleted: false, deletedAt: null });
   }

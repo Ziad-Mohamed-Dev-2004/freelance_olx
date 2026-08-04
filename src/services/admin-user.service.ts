@@ -81,9 +81,9 @@ export class AdminUserService {
     ]);
   }
 
-  async softDelete(id: string, adminId: string) {
+  async deleteUser(id: string, adminId: string) {
     this.preventSelfAction(adminId, id, 'delete your own account');
-    return userAccountService.softDelete(id);
+    return userAccountService.hardDelete(id);
   }
 
   async restore(id: string, adminId: string) {

@@ -341,8 +341,8 @@ router.get('/me', auth, authController.me);
  *                     data:
  *                       type: object
  *                       properties:
- *                         user:
- *                           $ref: '#/components/schemas/UserResponse'
+ *                         id:
+ *                           type: string
  *       401:
  *         description: Not authenticated
  */

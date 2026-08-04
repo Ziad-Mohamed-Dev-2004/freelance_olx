@@ -230,7 +230,7 @@ router.get('/users', ...admin, validate(validation.adminUserQuerySchema), contro
  *       200:
  *         description: User updated
  *   delete:
- *     summary: Soft delete any account except the current admin account
+ *     summary: Permanently delete any account except the current admin account
  *     tags: [Admin]
  *     security:
  *       - bearerAuth: []
@@ -241,7 +241,7 @@ router.get('/users', ...admin, validate(validation.adminUserQuerySchema), contro
  *         schema: { type: string }
  *     responses:
  *       200:
- *         description: User soft deleted
+ *         description: User permanently deleted
  */
 router.get('/users/:id', ...admin, validate(validation.adminUserIdSchema), controller.getUser);
 router.get('/cities', ...admin, validate(cityValidation.cityQuerySchema), cityController.getCities);

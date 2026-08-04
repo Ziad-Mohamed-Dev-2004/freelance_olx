@@ -89,8 +89,8 @@ export const resetPassword = async (resetPasswordToken: string, newPassword: str
 };
 
 /**
- * Soft deletes the current user's account and revokes active auth artifacts.
+ * Permanently deletes the current user's account and all related data.
  */
 export const deleteCurrentUserAccount = async (userId: string) => {
-  return userAccountService.softDelete(userId);
+  return userAccountService.hardDelete(userId);
 };

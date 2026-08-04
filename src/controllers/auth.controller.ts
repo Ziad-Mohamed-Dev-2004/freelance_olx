@@ -111,9 +111,9 @@ export const me = asyncHandler(async (req: Request, res: Response) => {
 
 /**
  * DELETE /auth/me
- * Soft deletes the authenticated user's account.
+ * Permanently deletes the authenticated user's account from the database.
  */
 export const deleteMyAccount = asyncHandler(async (req: Request, res: Response) => {
-  const deletedUser = await authService.deleteCurrentUserAccount(req.user!._id.toString());
-  ApiResponse.success(res, 200, 'Account deleted successfully', { user: deletedUser });
+  const result = await authService.deleteCurrentUserAccount(req.user!._id.toString());
+  ApiResponse.success(res, 200, 'Account deleted successfully', result);
 });

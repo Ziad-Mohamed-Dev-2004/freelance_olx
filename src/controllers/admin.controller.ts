@@ -140,7 +140,7 @@ export const deleteUser = asyncHandler(async (req, res) =>
     res,
     200,
     'User deleted successfully',
-    await adminUserService.softDelete(param(req, 'id'), req.user!._id.toString()),
+    await adminUserService.deleteUser(param(req, 'id'), req.user!._id.toString()),
   ),
 );
 
