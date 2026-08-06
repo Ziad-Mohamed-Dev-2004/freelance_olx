@@ -9,6 +9,7 @@
     "vercel-build": "npm run build",
     "seed:admin": "ts-node src/scripts/seedAdmin.ts",
     "seed:locations": "ts-node src/scripts/seedLocations.ts",
+    "test:cloudinary": "ts-node src/scripts/testCloudinary.ts",
     "start": "node dist/server.js",
     "lint": "eslint \"src/**/*.ts\"",
     "format": "prettier --write \"src/**/*.ts\""

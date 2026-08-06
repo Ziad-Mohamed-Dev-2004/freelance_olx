@@ -1,4 +1,5 @@
 import express, { Express, Request, Response } from 'express';
+import path from 'path';
 import helmet from 'helmet';
 import cors from 'cors';
 import compression from 'compression';
@@ -55,7 +56,7 @@ app.use(
         defaultSrc: ["'self'"],
         scriptSrc: ["'self'", "'unsafe-inline'", "https://unpkg.com"],
         styleSrc: ["'self'", "'unsafe-inline'", "https://unpkg.com"],
-        imgSrc: ["'self'", "data:", "https://unpkg.com"],
+        imgSrc: ["'self'", "data:", "https://unpkg.com", "https://res.cloudinary.com"],
         connectSrc: ["'self'"],
         fontSrc: ["'self'", "https://unpkg.com"],
         objectSrc: ["'none'"],
@@ -78,6 +79,9 @@ app.use(compression());
 // ─── CORS ─────────────────────────────────────────────────────────────────────
 app.use(cors());
 app.options(/.*/, cors());
+
+// ─── Local Uploaded Images ────────────────────────────────────────────────────
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 // ─── HTTP Request Logging ─────────────────────────────────────────────────────
 app.use(

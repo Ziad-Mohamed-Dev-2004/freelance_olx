@@ -7,6 +7,7 @@ import { Server } from 'socket.io';
 import { initializeChatSocket } from './sockets/chat.socket';
 import { seedEgyptLocations } from './scripts/seedLocations';
 import City from './models/city.model';
+import cloudinaryService from './services/cloudinary.service';
 
 // ─── Vercel Serverless Compatibility ─────────────────────────────────────────
 // On Vercel the platform manages HTTP connections itself — we must NOT call
@@ -34,6 +35,22 @@ if (isVercel) {
       }
     } catch (err) {
       logger.error('Error auto-seeding locations on startup:', err);
+    }
+
+    try {
+      const imageStorageStatus = await cloudinaryService.verifyUploadAccess();
+      if (imageStorageStatus.ok) {
+        logger.info(`Image uploads ready (${imageStorageStatus.mode} storage).`);
+      } else {
+        logger.warn(`Image uploads are not fully configured: ${imageStorageStatus.message}`);
+        if (config.env === 'development') {
+          logger.warn(
+            'Development fallback: uploads will use local storage when Cloudinary returns a permissions error.',
+          );
+        }
+      }
+    } catch (err) {
+      logger.error('Failed to verify image upload configuration:', err);
     }
 
     const httpServer = createServer(app);

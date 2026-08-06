@@ -35,7 +35,12 @@ export const config = {
     cloudName: process.env.CLOUDINARY_CLOUD_NAME || '',
     apiKey: process.env.CLOUDINARY_API_KEY || '',
     apiSecret: process.env.CLOUDINARY_API_SECRET || '',
+    uploadPreset: process.env.CLOUDINARY_UPLOAD_PRESET || '',
   },
+  imageStorage: (process.env.IMAGE_STORAGE || 'cloudinary') as 'cloudinary' | 'local',
+  publicBaseUrl:
+    process.env.PUBLIC_BASE_URL ||
+    `http://localhost:${parseInt(process.env.PORT || '3000', 10)}`,
   smtp: {
     host: process.env.SMTP_HOST || '',
     port: parseInt(process.env.SMTP_PORT || '587', 10),
