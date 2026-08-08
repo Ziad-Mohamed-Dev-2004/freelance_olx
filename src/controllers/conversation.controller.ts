@@ -36,3 +36,7 @@ export const get = asyncHandler(async (req, res) =>
     await conversationService.get(param(req, 'conversationId'), req.user!._id.toString()),
   ),
 );
+export const remove = asyncHandler(async (req, res) => {
+  await conversationService.remove(param(req, 'conversationId'), req.user!._id.toString());
+  ApiResponse.success(res, 200, 'Conversation deleted successfully');
+});

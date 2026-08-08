@@ -5,9 +5,15 @@ import notificationService from './notification.service';
 import presenceService from './presence.service';
 import blockService from './block.service';
 import cloudinaryService from './cloudinary.service';
+import { IMessage } from '../interfaces/message.interface';
 import { MessageType } from '../interfaces/message.interface';
 import { BadRequestError, ForbiddenError, NotFoundError } from '../utils/AppError';
-import { PaginationQuery, SendMessageInput } from '../types/chat.types';
+import {
+  BulkDeleteMessagesInput,
+  MessageDeleteResult,
+  PaginationQuery,
+  SendMessageInput,
+} from '../types/chat.types';
 
 export class MessageService {
   constructor(private readonly repo: MessageRepository = messageRepository) {}
@@ -62,27 +68,55 @@ export class MessageService {
       .filter((id: string) => id !== userId);
   }
   async remove(conversationId: string, messageId: string, userId: string) {
+    const result = await this.removeMany(conversationId, userId, { messageIds: [messageId] });
+    return { messageId: result.messageIds[0], conversationId: result.conversationId };
+  }
+  async removeMany(
+    conversationId: string,
+    userId: string,
+    input: BulkDeleteMessagesInput,
+  ): Promise<MessageDeleteResult> {
     await conversationService.assertAccess(conversationId, userId);
-    const message = await this.repo.findOne({ _id: messageId, conversation: conversationId });
-    if (!message) throw new NotFoundError('Message not found');
-    if (message.sender.toString() !== userId)
+    const messageIds = [...new Set(input.messageIds)];
+    if (!messageIds.length) throw new BadRequestError('Select at least one message');
+    const messages = await this.repo.findByIdsInConversation(conversationId, messageIds);
+    if (messages.length !== messageIds.length)
+      throw new NotFoundError('One or more messages were not found in this conversation');
+    if (messages.some((message) => message.sender.toString() !== userId))
       throw new ForbiddenError('You can only delete your own messages');
-    if (message.attachment?.url) await cloudinaryService.deleteImage(message.attachment.url);
+    await this.deleteAttachments(messages);
+    await this.repo.deleteManyByIds(messageIds);
+    await this.syncLastMessage(conversationId);
+    return { conversationId, messageIds, deletedCount: messageIds.length };
+  }
+  async removeAll(conversationId: string, userId: string): Promise<MessageDeleteResult> {
+    await conversationService.assertAccess(conversationId, userId);
+    const messages = await this.repo.findAllInConversation(conversationId);
+    if (!messages.length) return { conversationId, messageIds: [], deletedCount: 0 };
+    const messageIds = messages.map((message) => message._id.toString());
+    await this.deleteAttachments(messages);
+    await this.repo.deleteAllInConversation(conversationId);
+    await this.syncLastMessage(conversationId);
+    return { conversationId, messageIds, deletedCount: messageIds.length };
+  }
+  private async deleteAttachments(messages: IMessage[]) {
+    await Promise.all(
+      messages
+        .filter((message) => message.attachment?.url)
+        .map((message) => cloudinaryService.deleteImage(message.attachment!.url)),
+    );
+  }
+  private async syncLastMessage(conversationId: string) {
     const conversation = await conversationRepository.findById(conversationId);
-    const wasLastMessage = conversation?.lastMessage?.toString() === messageId;
-    if (!(await this.repo.deleteById(messageId))) throw new NotFoundError('Message not found');
-    if (wasLastMessage) {
-      const latest = await this.repo.findLatestInConversation(conversationId);
-      if (latest) {
-        await conversationRepository.touch(conversationId, latest._id.toString());
-      } else {
-        await conversationRepository.updateById(conversationId, {
-          lastMessage: null,
-          lastMessageAt: conversation?.createdAt || new Date(),
-        });
-      }
+    const latest = await this.repo.findLatestInConversation(conversationId);
+    if (latest) {
+      await conversationRepository.touch(conversationId, latest._id.toString());
+      return;
     }
-    return { messageId, conversationId };
+    await conversationRepository.updateById(conversationId, {
+      lastMessage: null,
+      lastMessageAt: conversation?.createdAt || new Date(),
+    });
   }
 }
 export default new MessageService();

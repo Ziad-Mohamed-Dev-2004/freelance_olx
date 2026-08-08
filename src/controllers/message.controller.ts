@@ -44,3 +44,15 @@ export const remove = asyncHandler(async (req, res) => {
   );
   ApiResponse.success(res, 200, 'Message deleted successfully', result);
 });
+export const removeMany = asyncHandler(async (req, res) => {
+  const result = await messageService.removeMany(
+    id(req),
+    req.user!._id.toString(),
+    req.body,
+  );
+  ApiResponse.success(res, 200, 'Selected messages deleted successfully', result);
+});
+export const removeAll = asyncHandler(async (req, res) => {
+  const result = await messageService.removeAll(id(req), req.user!._id.toString());
+  ApiResponse.success(res, 200, 'Chat cleared successfully', result);
+});

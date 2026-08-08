@@ -15,3 +15,11 @@ export interface SendMessageInput {
     duration?: number;
   };
 }
+export interface BulkDeleteMessagesInput {
+  messageIds: string[];
+}
+export interface MessageDeleteResult {
+  conversationId: string;
+  messageIds: string[];
+  deletedCount: number;
+}

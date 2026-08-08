@@ -20,6 +20,12 @@ export const messageIdSchema = z.object({
   params: z.object({ conversationId: objectId, messageId: objectId }),
 });
 export const conversationQuerySchema = z.object({ query: pagination });
+export const bulkDeleteMessagesSchema = z.object({
+  params: z.object({ conversationId: objectId }),
+  body: z.object({
+    messageIds: z.array(objectId).min(1, 'Select at least one message').max(100),
+  }),
+});
 export const sendMessageSchema = z.object({
   params: z.object({ conversationId: objectId }),
   body: z

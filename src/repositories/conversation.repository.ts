@@ -28,5 +28,8 @@ export class ConversationRepository extends BaseRepository<IConversation> {
   touch(id: string, messageId: string) {
     return this.updateById(id, { lastMessage: messageId, lastMessageAt: new Date() });
   }
+  deleteById(id: string) {
+    return Conversation.findByIdAndDelete(id).exec();
+  }
 }
 export default new ConversationRepository();

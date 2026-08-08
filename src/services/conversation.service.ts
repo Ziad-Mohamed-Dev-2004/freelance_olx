@@ -6,6 +6,7 @@ import User from '../models/user.model';
 import blockService from './block.service';
 import { BadRequestError, ForbiddenError, NotFoundError } from '../utils/AppError';
 import { PaginationQuery } from '../types/chat.types';
+import messageService from './message.service';
 
 const participantKey = (a: string, b: string) => [a, b].sort().join(':');
 export class ConversationService {
@@ -58,6 +59,11 @@ export class ConversationService {
   }
   list(user: string, query: PaginationQuery) {
     return this.repo.findForUser(user, query);
+  }
+  async remove(id: string, user: string) {
+    await this.assertAccess(id, user);
+    await messageService.removeAll(id, user);
+    await this.repo.deleteById(id);
   }
   private assertParticipant(conversation: any, user: string) {
     if (!conversation) throw new NotFoundError('Conversation not found');

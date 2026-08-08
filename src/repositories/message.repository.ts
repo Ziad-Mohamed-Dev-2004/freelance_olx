@@ -29,8 +29,20 @@ export class MessageRepository extends BaseRepository<IMessage> {
   findLatestInConversation(conversation: string) {
     return Message.findOne({ conversation }).sort({ createdAt: -1 }).exec();
   }
+  findByIdsInConversation(conversation: string, ids: string[]) {
+    return Message.find({ conversation, _id: { $in: ids } }).exec();
+  }
+  findAllInConversation(conversation: string) {
+    return Message.find({ conversation }).exec();
+  }
   deleteById(id: string) {
     return Message.findByIdAndDelete(id).exec();
+  }
+  deleteManyByIds(ids: string[]) {
+    return Message.deleteMany({ _id: { $in: ids } }).exec();
+  }
+  deleteAllInConversation(conversation: string) {
+    return Message.deleteMany({ conversation }).exec();
   }
 }
 export default new MessageRepository();
