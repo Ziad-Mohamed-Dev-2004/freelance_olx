@@ -4,8 +4,9 @@ import conversationService from './conversation.service';
 import notificationService from './notification.service';
 import presenceService from './presence.service';
 import blockService from './block.service';
+import cloudinaryService from './cloudinary.service';
 import { MessageType } from '../interfaces/message.interface';
-import { BadRequestError, ForbiddenError } from '../utils/AppError';
+import { BadRequestError, ForbiddenError, NotFoundError } from '../utils/AppError';
 import { PaginationQuery, SendMessageInput } from '../types/chat.types';
 
 export class MessageService {
@@ -59,6 +60,29 @@ export class MessageService {
     return conversation.participants
       .map((p: any) => p.toString())
       .filter((id: string) => id !== userId);
+  }
+  async remove(conversationId: string, messageId: string, userId: string) {
+    await conversationService.assertAccess(conversationId, userId);
+    const message = await this.repo.findOne({ _id: messageId, conversation: conversationId });
+    if (!message) throw new NotFoundError('Message not found');
+    if (message.sender.toString() !== userId)
+      throw new ForbiddenError('You can only delete your own messages');
+    if (message.attachment?.url) await cloudinaryService.deleteImage(message.attachment.url);
+    const conversation = await conversationRepository.findById(conversationId);
+    const wasLastMessage = conversation?.lastMessage?.toString() === messageId;
+    if (!(await this.repo.deleteById(messageId))) throw new NotFoundError('Message not found');
+    if (wasLastMessage) {
+      const latest = await this.repo.findLatestInConversation(conversationId);
+      if (latest) {
+        await conversationRepository.touch(conversationId, latest._id.toString());
+      } else {
+        await conversationRepository.updateById(conversationId, {
+          lastMessage: null,
+          lastMessageAt: conversation?.createdAt || new Date(),
+        });
+      }
+    }
+    return { messageId, conversationId };
   }
 }
 export default new MessageService();

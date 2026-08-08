@@ -12,6 +12,8 @@ const router = express.Router();
  *   patch: { summary: Mark received messages as delivered, tags: [Chat], security: [{ bearerAuth: [] }], parameters: [{ in: path, name: conversationId, required: true, schema: { type: string } }], responses: { 200: { description: Updated } } }
  * /conversations/{conversationId}/messages/seen:
  *   patch: { summary: Mark received messages as seen, tags: [Chat], security: [{ bearerAuth: [] }], parameters: [{ in: path, name: conversationId, required: true, schema: { type: string } }], responses: { 200: { description: Updated } } }
+ * /conversations/{conversationId}/messages/{messageId}:
+ *   delete: { summary: Delete a message you sent, tags: [Chat], security: [{ bearerAuth: [] }], parameters: [{ in: path, name: conversationId, required: true, schema: { type: string } }, { in: path, name: messageId, required: true, schema: { type: string } }], responses: { 200: { description: Message deleted } } }
  */
 router.get(
   '/:conversationId/messages',
@@ -37,5 +39,11 @@ router.patch(
   auth,
   validate(validation.conversationIdSchema),
   controller.seen,
+);
+router.delete(
+  '/:conversationId/messages/:messageId',
+  auth,
+  validate(validation.messageIdSchema),
+  controller.remove,
 );
 export default router;

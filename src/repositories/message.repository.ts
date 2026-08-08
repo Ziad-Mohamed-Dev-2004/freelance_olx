@@ -26,5 +26,11 @@ export class MessageRepository extends BaseRepository<IMessage> {
       { $addToSet: { seenBy: user, deliveredTo: user } },
     ).exec();
   }
+  findLatestInConversation(conversation: string) {
+    return Message.findOne({ conversation }).sort({ createdAt: -1 }).exec();
+  }
+  deleteById(id: string) {
+    return Message.findByIdAndDelete(id).exec();
+  }
 }
 export default new MessageRepository();

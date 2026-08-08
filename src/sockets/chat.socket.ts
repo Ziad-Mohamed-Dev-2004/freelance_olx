@@ -127,6 +127,16 @@ export const initializeChatSocket = (io: Server) => {
         ack({ ok: false, error: (error as Error).message });
       }
     });
+    socket.on('deleteMessage', async ({ conversationId, messageId }, ack = () => undefined) => {
+      try {
+        const id = await access(conversationId);
+        const result = await messageService.remove(id, asString(messageId), userId);
+        io.to(conversationRoom(id)).emit('messageDeleted', result);
+        ack({ ok: true, data: result });
+      } catch (error) {
+        ack({ ok: false, error: (error as Error).message });
+      }
+    });
     socket.on('disconnect', async () => {
       await Promise.all([...socket.data.joined].map((id) => typingService.stop(id, userId)));
       await presenceService.disconnect(userId, socket.id);

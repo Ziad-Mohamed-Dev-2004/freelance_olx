@@ -6,6 +6,8 @@ const id = (req: Request) =>
   Array.isArray(req.params.conversationId)
     ? req.params.conversationId[0]
     : req.params.conversationId;
+const messageId = (req: Request) =>
+  Array.isArray(req.params.messageId) ? req.params.messageId[0] : req.params.messageId;
 const query = (req: Request) => ({
   page: Number(req.query.page || 1),
   limit: Number(req.query.limit || 30),
@@ -33,4 +35,12 @@ export const delivered = asyncHandler(async (req, res) => {
 export const seen = asyncHandler(async (req, res) => {
   await messageService.seen(id(req), req.user!._id.toString());
   ApiResponse.success(res, 200, 'Messages marked as seen');
+});
+export const remove = asyncHandler(async (req, res) => {
+  const result = await messageService.remove(
+    id(req),
+    messageId(req),
+    req.user!._id.toString(),
+  );
+  ApiResponse.success(res, 200, 'Message deleted successfully', result);
 });

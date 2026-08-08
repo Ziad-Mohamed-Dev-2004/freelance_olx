@@ -528,13 +528,14 @@ router.patch(
  *       200:
  *         description: Role updated
  */
-router.patch(
-  '/users/:id/change-role',
+const changeUserRoleHandlers = [
   ...admin,
   validate(validation.changeUserRoleSchema),
   auditAdminAction('CHANGE_USER_ROLE', 'User'),
   controller.changeUserRole,
-);
+] as const;
+router.patch('/users/:id/change-role', ...changeUserRoleHandlers);
+router.patch('/users/:id/role', ...changeUserRoleHandlers);
 
 // Property management
 router.get(

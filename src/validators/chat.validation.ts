@@ -16,6 +16,9 @@ export const startConversationSchema = z.object({
   body: z.object({ propertyId: objectId, recipientId: objectId.optional() }),
 });
 export const conversationIdSchema = z.object({ params: z.object({ conversationId: objectId }) });
+export const messageIdSchema = z.object({
+  params: z.object({ conversationId: objectId, messageId: objectId }),
+});
 export const conversationQuerySchema = z.object({ query: pagination });
 export const sendMessageSchema = z.object({
   params: z.object({ conversationId: objectId }),
