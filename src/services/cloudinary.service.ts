@@ -1,5 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
+import os from 'os';
 import { UploadApiResponse } from 'cloudinary';
 import cloudinary from '../config/cloudinary.config';
 import { config } from '../config/env.config';
@@ -7,7 +8,8 @@ import { BadRequestError, InternalServerError } from '../utils/AppError';
 import logger from '../utils/logger';
 
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
-const UPLOADS_DIR = path.join(process.cwd(), 'uploads');
+const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+const UPLOADS_DIR = isServerless ? path.join(os.tmpdir(), 'uploads') : path.join(process.cwd(), 'uploads');
 
 export interface UploadedImageResult {
   url: string;
@@ -229,6 +231,9 @@ export class CloudinaryService {
   }
 
   private shouldFallbackToLocal(error: unknown): boolean {
+    if (isServerless) {
+      return false;
+    }
     return config.env === 'development' && this.isCloudinaryPermissionError(error);
   }
 
@@ -247,7 +252,7 @@ export class CloudinaryService {
 
     if (this.isCloudinaryPermissionError(error)) {
       return new InternalServerError(
-        'Cloudinary upload is blocked: your API key lacks upload permissions. Assign the "Upload assets" role in Cloudinary Console → Settings → API Keys, or set CLOUDINARY_UPLOAD_PRESET / IMAGE_STORAGE=local.',
+        'Cloudinary upload failed: Your Cloudinary API Key lacks "Upload assets" permission. In Cloudinary Console → Settings → API Keys, assign the "Upload assets" role to your API key, or use the Root API Key, or configure an unsigned upload preset (CLOUDINARY_UPLOAD_PRESET).',
       );
     }
 
