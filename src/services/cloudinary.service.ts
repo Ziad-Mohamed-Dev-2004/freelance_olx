@@ -7,7 +7,6 @@ import { BadRequestError, InternalServerError } from '../utils/AppError';
 import logger from '../utils/logger';
 
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
-const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
 const UPLOADS_DIR = path.join(process.cwd(), 'uploads');
 
 export interface UploadedImageResult {
@@ -22,10 +21,6 @@ export class CloudinaryService {
   validateImageFile(file: Express.Multer.File): void {
     if (!ALLOWED_MIME_TYPES.includes(file.mimetype)) {
       throw new BadRequestError('Invalid image type. Allowed: JPEG, PNG, WEBP, GIF');
-    }
-
-    if (file.size > MAX_FILE_SIZE_BYTES) {
-      throw new BadRequestError('Image size must not exceed 5 MB');
     }
   }
 
@@ -163,6 +158,7 @@ export class CloudinaryService {
     const options: Record<string, unknown> = {
       folder: uploadFolder,
       resource_type: 'image',
+      quality: '100',
     };
 
     if (config.cloudinary.uploadPreset) {

@@ -18,7 +18,6 @@ const imageFilter: multer.Options['fileFilter'] = (_req, file, callback) => {
 const upload = multer({
   storage: memoryStorage,
   limits: {
-    fileSize: 5 * 1024 * 1024,
     files: 1,
   },
   fileFilter: imageFilter,
@@ -27,7 +26,6 @@ const upload = multer({
 const propertyUpload = multer({
   storage: memoryStorage,
   limits: {
-    fileSize: 5 * 1024 * 1024,
     files: 10,
   },
   fileFilter: imageFilter,
@@ -41,10 +39,6 @@ export const uploadSingleImage = (fieldName: string) => {
   return (req: Request, res: Response, next: NextFunction): void => {
     upload.single(fieldName)(req, res, (error: unknown) => {
       if (error instanceof MulterError) {
-        if (error.code === 'LIMIT_FILE_SIZE') {
-          next(new BadRequestError('Image size must not exceed 5 MB'));
-          return;
-        }
         next(new BadRequestError(error.message));
         return;
       }
@@ -69,10 +63,6 @@ export const uploadPropertyImages = (fieldName = 'images') => {
   return (req: Request, res: Response, next: NextFunction): void => {
     propertyUpload.array(fieldName, 10)(req, res, (error: unknown) => {
       if (error instanceof MulterError) {
-        if (error.code === 'LIMIT_FILE_SIZE') {
-          next(new BadRequestError('Each image size must not exceed 5 MB'));
-          return;
-        }
         if (error.code === 'LIMIT_FILE_COUNT' || error.code === 'LIMIT_UNEXPECTED_FILE') {
           next(new BadRequestError('A property can contain a maximum of 10 images'));
           return;
