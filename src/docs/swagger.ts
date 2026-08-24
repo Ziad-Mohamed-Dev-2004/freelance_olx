@@ -408,6 +408,32 @@ const options: swaggerJsdoc.Options = {
             password: { type: 'string', format: 'password', example: 'Password123' },
           },
         },
+        GoogleAuthInput: {
+          type: 'object',
+          properties: {
+            idToken: {
+              type: 'string',
+              description: 'Google ID token obtained from Google Sign-In on client side',
+              example: 'eyJhbGciOiJSUzI1NiIs...',
+            },
+            credential: {
+              type: 'string',
+              description: 'Google Credential string from Google One Tap / GIS button',
+              example: 'eyJhbGciOiJSUzI1NiIs...',
+            },
+            code: {
+              type: 'string',
+              description: 'Google OAuth authorization code obtained from authorization code flow',
+              example: '4/0AX4XfWg...',
+            },
+            redirectUri: {
+              type: 'string',
+              description: 'Optional redirect URI used when exchanging authorization code',
+              example: 'postmessage',
+            },
+          },
+        },
+
         RefreshTokenInput: {
           type: 'object',
           required: ['refreshToken'],

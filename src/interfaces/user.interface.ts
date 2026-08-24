@@ -18,6 +18,8 @@ export interface IUser extends Document {
   phone?: string;
   password?: string;
   avatar?: string;
+  googleId?: string;
+  authProvider?: 'local' | 'google';
   role: UserRole;
   status: UserStatus;
   isPhoneVerified: boolean;

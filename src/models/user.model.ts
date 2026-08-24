@@ -22,10 +22,20 @@ const userSchema = new Schema<IUser>(
     },
     password: {
       type: String,
-      required: true,
+      required: false,
     },
     avatar: {
       type: String,
+    },
+    googleId: {
+      type: String,
+      sparse: true,
+      index: true,
+    },
+    authProvider: {
+      type: String,
+      enum: ['local', 'google'],
+      default: 'local',
     },
     role: {
       type: String,
@@ -69,6 +79,9 @@ userSchema.index({ name: 1, email: 1, phone: 1 });
 
 // Check if password matches the user's password
 userSchema.methods.isPasswordMatch = async function (password: string): Promise<boolean> {
+  if (!this.password) {
+    return false;
+  }
   return bcrypt.compare(password, this.password);
 };
 

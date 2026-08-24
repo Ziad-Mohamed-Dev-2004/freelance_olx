@@ -64,3 +64,18 @@ export const resendRegistrationOtpSchema = z.object({
     email: z.string().email('Invalid email format'),
   }),
 });
+
+export const googleAuthSchema = z.object({
+  body: z
+    .object({
+      idToken: z.string().optional(),
+      credential: z.string().optional(),
+      code: z.string().optional(),
+      redirectUri: z.string().optional(),
+    })
+    .refine((data) => !!(data.idToken || data.credential || data.code), {
+      message: 'Either idToken (credential) or authorization code must be provided',
+    }),
+});
+
+

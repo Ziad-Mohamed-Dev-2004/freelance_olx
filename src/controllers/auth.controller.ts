@@ -63,6 +63,27 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
 });
 
 /**
+ * POST /auth/google
+ * Authenticates (logins or registers) a user via Google ID Token or OAuth Code and returns auth tokens.
+ */
+export const googleAuth = asyncHandler(async (req: Request, res: Response) => {
+  const user = await authService.loginOrRegisterWithGoogle(req.body);
+  const tokens = await tokenService.generateAuthTokens(user);
+  if (user.role === UserRole.ADMIN) {
+    await adminLogService.create({
+      admin: user._id.toString(),
+      action: 'ADMIN_LOGIN',
+      entityType: 'User',
+      entityId: user._id.toString(),
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent'),
+    });
+  }
+  ApiResponse.success(res, 200, 'Google authentication successful', { user, tokens });
+});
+
+
+/**
  * POST /auth/logout
  * Invalidates the refresh token.
  */

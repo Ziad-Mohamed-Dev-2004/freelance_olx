@@ -173,6 +173,46 @@ router.post('/login', validate(authValidation.loginSchema), authController.login
 
 /**
  * @swagger
+ * /auth/google:
+ *   post:
+ *     summary: Authenticate (Login or Register) using Google ID Token
+ *     description: Verifies Google ID token, registers new users automatically or logs in existing ones, and returns JWT access and refresh tokens.
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/GoogleAuthInput'
+ *     responses:
+ *       200:
+ *         description: Google authentication successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         user:
+ *                           $ref: '#/components/schemas/UserResponse'
+ *                         tokens:
+ *                           $ref: '#/components/schemas/TokenPair'
+ *       400:
+ *         description: Invalid input or missing token
+ *       401:
+ *         description: Invalid or expired Google token
+ *       409:
+ *         description: Account conflict
+ */
+router.post('/google', validate(authValidation.googleAuthSchema), authController.googleAuth);
+
+
+/**
+ * @swagger
  * /auth/logout:
  *   post:
  *     summary: Logout and invalidate refresh token
