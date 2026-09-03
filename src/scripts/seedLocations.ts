@@ -69,40 +69,57 @@ export async function seedEgyptLocations(): Promise<{ citiesCount: number; areas
   );
 
   // 1. Seed Governorates (Cities in DB)
+  const existingCities = await City.find({}).lean();
+  const existingCityNameMap = new Map(existingCities.map((c) => [c.name, c]));
+  const existingSlugs = new Set(existingCities.map((c) => c.slug));
+
   const govMap = new Map<string, { id: mongoose.Types.ObjectId; nameEn: string }>();
+  const citiesToCreate: any[] = [];
 
   for (const gov of govRecords) {
     const govId = gov.id;
     const govNameAr = gov.governorate_name_ar;
     const govNameEn = gov.governorate_name_en;
 
-    let baseSlug = slugify(govNameEn || govNameAr);
-    let slug = baseSlug;
+    const existing = existingCityNameMap.get(govNameAr);
 
-    let cityDoc = await City.findOne({ name: govNameAr });
-
-    if (!cityDoc) {
-      // Ensure unique slug
+    if (existing) {
+      govMap.set(govId, { id: existing._id as mongoose.Types.ObjectId, nameEn: govNameEn });
+    } else {
+      let baseSlug = slugify(govNameEn || govNameAr);
+      let slug = baseSlug;
       let count = 1;
-      while (await City.findOne({ slug })) {
+
+      while (existingSlugs.has(slug)) {
         slug = `${baseSlug}-${count}`;
         count++;
       }
+      existingSlugs.add(slug);
 
-      cityDoc = await City.create({
+      const newCityId = new mongoose.Types.ObjectId();
+      citiesToCreate.push({
+        _id: newCityId,
         name: govNameAr,
         governorate: govNameAr,
         slug,
         isActive: true,
         isDeleted: false,
       });
-    }
 
-    govMap.set(govId, { id: cityDoc._id as mongoose.Types.ObjectId, nameEn: govNameEn });
+      govMap.set(govId, { id: newCityId, nameEn: govNameEn });
+    }
+  }
+
+  if (citiesToCreate.length > 0) {
+    await City.insertMany(citiesToCreate);
   }
 
   // 2. Seed Cities (Areas in DB)
-  let seededAreasCount = 0;
+  const existingAreas = await Area.find({}).lean();
+  const existingAreaKeySet = new Set(existingAreas.map((a) => `${a.city.toString()}_${a.name}`));
+  const existingAreaSlugs = new Set(existingAreas.map((a) => a.slug));
+
+  const areasToCreate: any[] = [];
 
   for (const cityItem of cityRecords) {
     const govId = cityItem.governorate_id;
@@ -112,37 +129,40 @@ export async function seedEgyptLocations(): Promise<{ citiesCount: number; areas
     const govInfo = govMap.get(govId);
     if (!govInfo) continue;
 
-    let areaDoc = await Area.findOne({ city: govInfo.id, name: cityNameAr });
+    const areaKey = `${govInfo.id.toString()}_${cityNameAr}`;
+    if (existingAreaKeySet.has(areaKey)) continue;
 
-    if (!areaDoc) {
-      let baseSlug = slugify(cityNameEn || cityNameAr);
-      let slug = baseSlug;
+    let baseSlug = slugify(cityNameEn || cityNameAr);
+    let slug = baseSlug;
+    let count = 1;
 
-      // Handle duplicate slugs across areas
-      let count = 1;
-      while (await Area.findOne({ slug })) {
-        slug = `${baseSlug}-${slugify(govInfo.nameEn || '') || count}`;
-        if (await Area.findOne({ slug })) {
-          slug = `${baseSlug}-${count}`;
-        }
-        count++;
+    while (existingAreaSlugs.has(slug)) {
+      slug = `${baseSlug}-${slugify(govInfo.nameEn || '') || count}`;
+      if (existingAreaSlugs.has(slug)) {
+        slug = `${baseSlug}-${count}`;
       }
-
-      await Area.create({
-        city: govInfo.id,
-        name: cityNameAr,
-        slug,
-        isActive: true,
-        isDeleted: false,
-      });
-      seededAreasCount++;
+      count++;
     }
+    existingAreaSlugs.add(slug);
+
+    areasToCreate.push({
+      city: govInfo.id,
+      name: cityNameAr,
+      slug,
+      isActive: true,
+      isDeleted: false,
+    });
   }
 
+  if (areasToCreate.length > 0) {
+    await Area.insertMany(areasToCreate);
+  }
+
+  const totalAreasSeeded = areasToCreate.length;
   logger.info(
-    `Locations seeded successfully: ${govMap.size} Governorates (Cities) and ${seededAreasCount} Areas.`,
+    `Locations seeded successfully: ${citiesToCreate.length} new Governorates (Cities) created and ${totalAreasSeeded} new Areas created.`,
   );
-  return { citiesCount: govMap.size, areasCount: seededAreasCount };
+  return { citiesCount: govMap.size, areasCount: totalAreasSeeded };
 }
 
 const runSeederCLI = async () => {

@@ -6,6 +6,7 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import { initializeChatSocket } from './sockets/chat.socket';
 import { seedEgyptLocations } from './scripts/seedLocations';
+import { seedAdmin } from './scripts/seedAdmin';
 import City from './models/city.model';
 import cloudinaryService from './services/cloudinary.service';
 
@@ -25,6 +26,12 @@ if (isVercel) {
 } else {
   // Local dev / traditional server: full boot with Socket.io and CSV auto-seed.
   void connectDB().then(async () => {
+    try {
+      await seedAdmin();
+    } catch (err) {
+      logger.error('Error auto-seeding admin user on startup:', err);
+    }
+
     try {
       const cityCount = await City.countDocuments();
       if (cityCount === 0) {
